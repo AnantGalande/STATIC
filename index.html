@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MyCloud — Live on the Web</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --accent: #00e5ff;
+      --accent2: #a78bfa;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --green: #22d3a5;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blob { position: fixed; border-radius: 50%; filter: blur(120px); opacity: .18; pointer-events: none; z-index: 0; }
+    .blob-1 { width: 500px; height: 500px; background: var(--accent);  top: -150px; left: -150px; }
+    .blob-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; right: -100px; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(10,10,15,.75);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--accent); }
+    .logo span { color: var(--text); }
+    .status-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(34,211,165,.1);
+      border: 1px solid rgba(34,211,165,.3);
+      border-radius: 999px; padding: 6px 14px;
+      font-size: .75rem; color: var(--green);
+    }
+    .dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 1.8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 100px 24px 60px;
+    }
+
+    .tag {
+      display: inline-block; font-size: .7rem; letter-spacing: .15em;
+      text-transform: uppercase; color: var(--accent);
+      border: 1px solid rgba(0,229,255,.25); border-radius: 4px;
+      padding: 5px 12px; margin-bottom: 28px;
+      animation: fadeUp .7s .1s both;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+      animation: fadeUp .7s .2s both;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      margin-top: 20px; font-size: clamp(.85rem, 2vw, 1rem);
+      color: var(--muted); max-width: 520px; line-height: 1.7;
+      animation: fadeUp .7s .35s both;
+    }
+
+    .cta-row {
+      margin-top: 40px;
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp .7s .5s both;
+    }
+    .btn {
+      font-family: 'DM Mono', monospace; font-size: .85rem;
+      padding: 12px 28px; border-radius: 8px; cursor: pointer;
+      transition: transform .2s, box-shadow .2s; text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--accent); color: #000; border: none; box-shadow: 0 0 24px rgba(0,229,255,.35); }
+    .btn-primary:hover { box-shadow: 0 0 40px rgba(0,229,255,.55); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .stats {
+      position: relative; z-index: 1;
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 1px;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: var(--border);
+    }
+    .stat { flex: 1 1 160px; background: var(--surface); padding: 32px 24px; text-align: center; }
+    .stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: .72rem; color: var(--muted); margin-top: 4px; }
+
+    .section {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 0 auto; padding: 100px 24px;
+    }
+    .section-head { text-align: center; margin-bottom: 60px; }
+    .section-head h2 { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -1px; }
+    .section-head p { color: var(--muted); margin-top: 10px; font-size: .88rem; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 30px;
+      transition: border-color .25s, transform .25s;
+    }
+    .card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .card-icon { font-size: 1.6rem; margin-bottom: 16px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: rgba(0,229,255,.08); border-radius: 10px; }
+    .card h3 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .card p  { font-size: .82rem; color: var(--muted); line-height: 1.65; }
+
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      text-align: center; padding: 30px 24px;
+      font-size: .75rem; color: var(--muted);
+    }
+    footer span { color: var(--accent); }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+    @media (max-width: 600px) { nav { padding: 16px 20px; } }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <nav>
+    <div class="logo">My<span>Cloud</span></div>
+    <div class="status-pill"><div class="dot"></div> Server Online</div>
+  </nav>
+
+  <section class="hero">
+    <div class="tag">✦ Static Website &nbsp;·&nbsp; Public Access</div>
+    <h1>Deployed.<br/><em>Live on the Web.</em></h1>
+    <p class="subtitle">
+      Your static website is running on a cloud server and publicly accessible
+      via your server's public IP address or custom domain name.
+    </p>
+    <div class="cta-row">
+      <a href="#features" class="btn btn-primary">Explore Features</a>
+      <a href="#about" class="btn btn-ghost">About</a>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num">99.9%</div><div class="stat-label">Uptime SLA</div></div>
+    <div class="stat"><div class="stat-num">&lt;50ms</div><div class="stat-label">Avg Response Time</div></div>
+    <div class="stat"><div class="stat-num">SSL</div><div class="stat-label">HTTPS Secured</div></div>
+    <div class="stat"><div class="stat-num">CDN</div><div class="stat-label">Ready to Scale</div></div>
+  </div>
+
+  <section class="section" id="features">
+    <div class="section-head">
+      <h2>What's Included</h2>
+      <p>Everything configured for public-facing static hosting.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">🌐</div>
+        <h3>Public IP Access</h3>
+        <p>Server bound to a public IPv4 address with firewall rules open on ports 80 and 443 for inbound traffic.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <h3>HTTPS / SSL</h3>
+        <p>TLS certificate installed via Let's Encrypt. All HTTP traffic is automatically redirected to HTTPS.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Fast Web Server</h3>
+        <p>High-performance Nginx serving static files with gzip compression and optimized caching headers.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🗂️</div>
+        <h3>Static File Hosting</h3>
+        <p>HTML, CSS, JS, and images served directly with no backend runtime or database required.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌍</div>
+        <h3>Domain Ready</h3>
+        <p>DNS A-record configured pointing your custom domain to the server's public IP, resolving globally.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛡️</div>
+        <h3>Firewall Protected</h3>
+        <p>UFW configured to allow only SSH, HTTP, and HTTPS. All other inbound ports blocked by default.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="about" style="padding-top:0">
+    <div class="section-head">
+      <h2>About This Site</h2>
+      <p>A simple, fast, and secure static website hosted on the cloud.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">☁️</div>
+        <h3>Cloud Hosted</h3>
+        <p>Deployed on a virtual machine in the cloud, accessible from anywhere in the world at any time.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📄</div>
+        <h3>Static & Lightweight</h3>
+        <p>Pure HTML, CSS, and JavaScript — no frameworks, no database, no complexity. Just fast content delivery.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚀</div>
+        <h3>Always Available</h3>
+        <p>With server monitoring and auto-restart enabled, the site stays online and responsive 24/7.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Static Website &nbsp;·&nbsp; Hosted on Cloud &nbsp;·&nbsp; Accessible via <span>Public IP / Domain</span>
+  </footer>
+
+</body>
+</html>
